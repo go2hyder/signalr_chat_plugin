@@ -35,6 +35,16 @@ class SignalRChatPlugin {
 
   Stream<String> get errorStream => _errorStreamController.stream;
 
+  // SQL Broker style event: initPageChanged (no-arg and payload variants)
+  final StreamController<void> _initPageChangedController =
+      StreamController.broadcast();
+  final StreamController<dynamic> _initPageChangedPayloadController =
+      StreamController.broadcast();
+
+  Stream<void> get initPageChanged => _initPageChangedController.stream;
+  Stream<dynamic> get initPageChangedPayload =>
+      _initPageChangedPayloadController.stream;
+
   SignalRConnectionOptions? _options;
   UserRoomConnection? _currentConnection;
 
@@ -51,7 +61,7 @@ class SignalRChatPlugin {
         _connection.state == HubConnectionState.connected) {
       final message = _messageQueue.first;
       try {
-        await sendMessage(message.content);
+        await sendMessage(message.content, false);
         _messageQueue.removeAt(0);
       } catch (e) {
         _errorStreamController.add('Failed to process queued message: $e');
@@ -234,6 +244,10 @@ class SignalRChatPlugin {
         try {
           final sender = arguments[0]?.toString() ?? 'Unknown';
           final content = arguments[1]?.toString() ?? '';
+          bool hasFile = false;
+          if (arguments.length >= 5 && arguments[4] is bool) {
+            hasFile = arguments[4] as bool;
+          }
           final timestamp =
               arguments[2]?.toString() ?? DateTime.now().toIso8601String();
 
@@ -242,6 +256,7 @@ class SignalRChatPlugin {
             content: content,
             timestamp: DateTime.parse(timestamp),
             status: MessageStatus.delivered,
+            hasFile: hasFile,
           );
 
           developer.log('Parsed message from $sender: $content');
@@ -270,6 +285,27 @@ class SignalRChatPlugin {
           developer.log('Error processing connected users: $e');
           _errorStreamController.add('Error processing connected users: $e');
         }
+      }
+    });
+
+    // SQL Broker: initPageChanged support
+    _connection.on('initPageChanged', (List<Object?>? arguments) {
+      try {
+        // Fire no-arg stream to mirror React onChatChange callback
+        _initPageChangedController.add(null);
+
+        // Fire payload stream to mirror React onRowChange callback
+        if (arguments != null && arguments.isNotEmpty) {
+          // If server sends a single object or multiple args, pass first by convention
+          _initPageChangedPayloadController.add(
+            arguments.length == 1 ? arguments[0] : arguments,
+          );
+        } else {
+          _initPageChangedPayloadController.add(null);
+        }
+      } catch (e) {
+        developer.log('Error handling initPageChanged: $e');
+        _errorStreamController.add('Error handling initPageChanged: $e');
       }
     });
 
@@ -323,7 +359,7 @@ class SignalRChatPlugin {
     }
   }
 
-  Future<void> sendMessage(String content) async {
+  Future<void> sendMessage(String content, bool hasFile) async {
     if (_connection.state != HubConnectionState.connected) {
       developer.log(
         'Cannot send message: Not connected (state: ${_connection.state})',
@@ -334,6 +370,7 @@ class SignalRChatPlugin {
           sender: _currentConnection?.user ?? 'Unknown',
           content: content,
           timestamp: DateTime.now(),
+          hasFile: hasFile,
         ),
       );
       _errorStreamController.add('Message queued for later delivery');
@@ -344,7 +381,7 @@ class SignalRChatPlugin {
       developer.log('Sending message: $content');
 
       // Try to send with content only first
-      await _connection.invoke('SendMessage', args: [content]);
+      await _connection.invoke('SendMessage', args: [content, hasFile]);
 
       developer.log('Message sent successfully');
     } catch (e) {
@@ -366,6 +403,7 @@ class SignalRChatPlugin {
             sender: _currentConnection?.user ?? 'Unknown',
             content: content,
             timestamp: DateTime.now(),
+            hasFile: hasFile,
           ),
         );
 
@@ -376,6 +414,7 @@ class SignalRChatPlugin {
           content: content,
           timestamp: DateTime.now(),
           status: MessageStatus.failed,
+          hasFile: hasFile,
         );
         _messageStreamController.add(failedMessage);
       }
@@ -417,5 +456,7 @@ class SignalRChatPlugin {
     _connectionStateController.close();
     _errorStreamController.close();
     _connectedUsersStreamController.close();
+    _initPageChangedController.close();
+    _initPageChangedPayloadController.close();
   }
 }

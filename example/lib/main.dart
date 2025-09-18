@@ -343,7 +343,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _scrollToBottom();
 
       // Send the message
-      await _chatPlugin.sendMessage(message);
+      await _chatPlugin.sendMessage(message , false);
       developer.log('Message sent successfully');
     } catch (e, stackTrace) {
       developer.log('Error sending message: $e');
