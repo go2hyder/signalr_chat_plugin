@@ -1,6 +1,6 @@
 name: signalr_chat_plugin
 description: A Flutter plugin for integrating SignalR real-time chat.
-version: 1.0.4
+version: 1.0.6
 homepage: https://github.com/go2hyder/signalr_chat_plugin
 repository: https://github.com/go2hyder/signalr_chat_plugin
 issue_tracker: https://github.com/go2hyder/signalr_chat_plugin/issues
