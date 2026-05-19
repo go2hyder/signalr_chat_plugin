@@ -105,6 +105,31 @@ final options = SignalRConnectionOptions(
 await chatPlugin.initSignalR(options);
 ```
 
+### Bypass SSL Certificate Validation
+
+If your development or staging server uses a self-signed or invalid TLS
+certificate, you can bypass certificate validation so the connection does not
+fail with a handshake error:
+
+```dart
+await chatPlugin.initSignalR(
+  SignalRConnectionOptions(
+    serverUrl: 'https://dev-server.local/chathub',
+    bypassSslCertificateValidation: true,
+    transport: HttpTransportType.webSockets,
+    skipNegotiation: true,
+  ),
+);
+```
+
+> **WARNING:** Never enable `bypassSslCertificateValidation` in production.
+> It disables all TLS certificate checks on mobile and desktop platforms.
+> Browsers enforce their own certificate policies and ignore this flag.
+
+If the server does not support TLS at all, use an `http://` URL instead of
+`https://` — bypassing certificate validation will not help when there is no
+TLS to negotiate.
+
 ### Message Structure
 
 The plugin uses a `ChatMessage` class to handle messages:
@@ -162,6 +187,7 @@ The plugin provides comprehensive error handling:
 - `maxRetryAttempts`: Maximum reconnection attempts
 - `autoReconnect`: Enable/disable automatic reconnection
 - `useSecureConnection`: Enable/disable WSS/HTTPS
+- `bypassSslCertificateValidation`: Accept invalid/self-signed certs (mobile/desktop only, **not for production**)
 
 #### Streams
 - `messagesStream`: Receive incoming messages

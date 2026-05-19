@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'connection_options.dart';
 import 'message.dart';
+import 'ssl_http_client.dart';
 import 'user_room_connection.dart';
 
 class SignalRChatPlugin {
@@ -105,6 +106,8 @@ class SignalRChatPlugin {
         useSecureConnection: _options!.useSecureConnection,
         transport: _options!.transport,
         skipNegotiation: _options!.skipNegotiation,
+        bypassSslCertificateValidation:
+            _options!.bypassSslCertificateValidation,
       );
     }
 
@@ -172,6 +175,9 @@ class SignalRChatPlugin {
               .withUrl(
                 options.serverUrl,
                 HttpConnectionOptions(
+                  client: options.bypassSslCertificateValidation
+                      ? createBypassSslHttpClient()
+                      : null,
                   transport: options.transport,
                   skipNegotiation: options.skipNegotiation,
                   accessTokenFactory:

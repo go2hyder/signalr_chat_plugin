@@ -11,6 +11,12 @@ class SignalRConnectionOptions {
   final HttpTransportType transport;
   final bool skipNegotiation;
 
+  /// When `true`, accepts invalid or self-signed TLS certificates.
+  /// Only effective on mobile/desktop (IO platforms); browsers enforce
+  /// their own certificate policies and ignore this flag.
+  /// **WARNING:** Do not enable in production.
+  final bool bypassSslCertificateValidation;
+
   SignalRConnectionOptions({
     required this.serverUrl,
     this.accessToken,
@@ -21,5 +27,6 @@ class SignalRConnectionOptions {
     this.useSecureConnection = true,
     this.transport = HttpTransportType.webSockets,
     this.skipNegotiation = false,
+    this.bypassSslCertificateValidation = false,
   });
 }
