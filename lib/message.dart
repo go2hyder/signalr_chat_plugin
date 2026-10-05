@@ -44,7 +44,7 @@ class ChatMessage {
       messageId: json['messageId'] as String?,
       hasFile: json['hasFile'] as bool?,
       status: MessageStatus.values.firstWhere(
-            (e) => e.toString() == json['status'],
+        (e) => e.toString() == json['status'],
         orElse: () => MessageStatus.sending,
       ),
     );

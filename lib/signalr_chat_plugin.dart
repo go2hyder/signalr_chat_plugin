@@ -79,8 +79,8 @@ class SignalRChatPlugin {
     await Future.delayed(const Duration(seconds: 2));
 
     // Check network connectivity
-    var connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    final connectivityResults = await Connectivity().checkConnectivity();
+    if (connectivityResults.contains(ConnectivityResult.none)) {
       developer.log(
         'No network available. Waiting 3 seconds to retry reconnect...',
       );
@@ -175,9 +175,10 @@ class SignalRChatPlugin {
               .withUrl(
                 options.serverUrl,
                 HttpConnectionOptions(
-                  client: options.bypassSslCertificateValidation
-                      ? createBypassSslHttpClient()
-                      : null,
+                  client:
+                      options.bypassSslCertificateValidation
+                          ? createBypassSslHttpClient()
+                          : null,
                   transport: options.transport,
                   skipNegotiation: options.skipNegotiation,
                   accessTokenFactory:
